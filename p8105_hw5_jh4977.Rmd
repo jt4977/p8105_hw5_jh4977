@@ -1,0 +1,45 @@
+---
+title: "p8105_hw5_jh4977"
+author: "jh4977"
+date: "2025-11-12"
+output: github_document
+---
+# **Q1**
+Set a function if there are same birthdays, then the length will smaller than n.
+```{r}
+duplicate_birth = function(n){
+  birthdays = sample(1:365, n, replace = TRUE)
+  return(length(unique(birthdays)) < n)
+}
+```
+
+Test
+```{r}
+duplicate_birth(5)
+```
+
+Run 10000 from 2:50, use mean to calculate the probability
+```{r}
+simulate = function(n, rep = 10000) {
+  results = replicate(rep, duplicate_birth(n))
+  mean(results)
+}
+```
+
+```{r}
+library(tibble)
+group = 2:50
+prob = sapply(group, simulate)
+
+table = tibble(
+  group_size = group,
+  probability = prob
+)
+```
+## Comment
+The plot shows that when the group size reaches 23, the probability exceeds 0.5, meaning that in a group of 23 people, there’s already more than a 50% chance that at least two share a birthday.
+
+# **Q2**
+
+
+
