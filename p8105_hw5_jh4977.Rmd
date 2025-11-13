@@ -10,6 +10,7 @@ output: github_document
 library(tidyverse)
 library(rvest)
 library(broom)
+library(purrr)
 
 #knitr is a package, opts_chunk is a set of fun in knitr, $ means sxtract from opts_chunk, to get "set"
 knitr::opts_chunk$set(
@@ -134,5 +135,89 @@ ggplot(mu_summary, aes(x = mu_true)) +
   theme_minimal()
 ```
 
+**No — especially when the true effect (μ) is small.**
+
+**All samples (purple line):**  
+The sample mean \( \hat{\mu} \) is an unbiased estimator of the true mean \( \mu \), so when averaging across all simulated samples, the average \( \hat{\mu} \) is approximately equal to \( \mu \). This is why the purple line follows the diagonal.
+
+**Rejected only (yellow line):**  
+When we only keep samples where the null hypothesis was rejected (i.e., \( p < 0.05 \)), we are selectively keeping samples that happened to show unusually large effects by random chance. This selection process introduces **selection bias** (often called the *winner’s curse*).  
+As a result, the average \( \hat{\mu} \) in these “significant” samples is larger than the true \( \mu \).
+
+**Why the bias decreases with large μ:**  
+When the true effect is large, most samples already reject \( H_0 \); there’s little or no selection happening, so the “rejected-only” mean becomes closer to the true \( \mu \) (the two lines converge on the right).
+
+**Conclusion:**  
+The average \( \hat{\mu} \) across all samples is unbiased, but the average among significant samples is inflated. This happens because we condition on statistical significance, which overrepresents extreme estimates that pass the rejection threshold.
+
+
 # Q3
+import data and have a glimpse
+```{r}
+# 1) Import data
+wp_url <- "https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv"
+homi <- readr::read_csv(wp_url)  
+glimpse(homi)
+```
+**Description of the raw data**
+
+The raw dataset, obtained from *The Washington Post*, contains detailed information on homicides in 50 major U.S. cities. It includes **52,179 observations** and **12 variables**, where each row represents a single homicide case.  
+
+Key variables include:
+- `uid`: a unique identifier for each homicide case;  
+- `reported_date`: the date when the homicide was reported;  
+- `victim_first` and `victim_last`: the first and last names of the victim;  
+- `victim_race`, `victim_age`, and `victim_sex`: demographic characteristics of the victim;  
+- `city` and `state`: the location of the homicide;  
+- `lat` and `lon`: geographic coordinates for the homicide location;  
+- `disposition`: the case status, indicating whether the homicide was “Closed by arrest,” “Closed without arrest,” or remains “Open/No arrest.”  
+
+The dataset allows for analysis of homicide clearance rates across major U.S. cities by summarizing the total number of homicides and identifying which cases remain unsolved (defined as those marked “Closed without arrest” or “Open/No arrest”).
+
+```{r}
+# 2) homicides
+# use 'paste0' to combine characters
+homi2 <- homi %>% 
+  mutate(city_state = paste0(str_to_title(city), ", ", state)) %>% 
+  mutate(unsolved = disposition %in% c("Closed without arrest", "Open/No arrest")) #extract the two type in col "disposition"
+
+city_summ <- homi2 %>% 
+  group_by(city_state) %>% 
+  summarise(
+    n_total   = n(),
+    n_unsolve = sum(unsolved),
+    .groups = "drop"
+  )
+
+# 3) Baltimore
+balt <- filter(city_summ, city_state == "Baltimore, MD")
+balt_res <- prop.test(balt$n_unsolve, balt$n_total) %>% 
+  broom::tidy() %>% 
+  select(estimate, conf.low, conf.high)
+
+# 4) for all cities
+all_ci <- city_summ %>% 
+  mutate(
+    test = map2(n_unsolve, n_total, ~ prop.test(.x, .y)),
+    tidied = map(test, ~ broom::tidy(.x))
+  ) %>% 
+  unnest(tidied) %>% 
+  select(city_state, n_total, n_unsolve, estimate, conf.low, conf.high)
+```
+
+```{r homicide_plot, fig.width=8, fig.asp=2.25, out.width="100%"}
+
+# 5) plot
+ggplot(
+  all_ci |> mutate(city_state = fct_reorder(city_state, estimate)),
+  aes(x = city_state, y = estimate)
+) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  coord_flip() +
+  labs(x = NULL, y = "Proportion unsolved (with 95% CI)",
+       title = "Unsolved homicide proportions by city") +
+  theme_minimal(base_size = 12)
+```
+
 
