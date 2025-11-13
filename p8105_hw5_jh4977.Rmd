@@ -4,6 +4,33 @@ author: "jh4977"
 date: "2025-11-12"
 output: github_document
 ---
+
+```{r setup, include=FALSE}
+# what has benn down here is to set global plots form.
+library(tidyverse)
+library(rvest)
+library(broom)
+
+#knitr is a package, opts_chunk is a set of fun in knitr, $ means sxtract from opts_chunk, to get "set"
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_color_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+set.seed(1)
+
+```
+
 # **Q1**
 Set a function if there are same birthdays, then the length will smaller than n.
 ```{r}
@@ -40,6 +67,72 @@ table = tibble(
 The plot shows that when the group size reaches 23, the probability exceeds 0.5, meaning that in a group of 23 people, there’s already more than a 50% chance that at least two share a birthday.
 
 # **Q2**
+### Simulation
+Use function to run the whole simulation.
+map_df(a, b): run function b for a and map results up.
+Use mean() to calculate the Pro of power(Pr(reject H0))
+```{r}
+sigma <- 5
+n <- 30
+set_mu <- 1:6
+alpha <- 0.05
 
+sim_one_mu <- function(mu) {
+  replicate(5000, {
+    x <- rnorm(n, mean = mu, sd = sigma)
+    t_out <- t.test(x, mu = 0) %>% 
+    broom::tidy()
+    tibble(
+      mu_true = mu,
+      mu_hat = mean(x),
+      p_val = t_out$p.value
+    )
+  }, simplify = FALSE) |> bind_rows()
+}
 
+sim_results = map_df(set_mu, sim_one_mu)
+
+power_df <- sim_results %>% 
+  group_by(mu_true) %>% 
+  summarise(power = mean(p_val < alpha))
+```
+
+## Plot
+```{r}
+# Plot 1: Power vs effect size
+ggplot(
+  power_df, aes(x = mu_true, y = power)
+  ) +
+  geom_line() + geom_point() +
+  labs(
+    title = "Power curve for one-sample t-test",
+    x = "True mean (μ)",
+    y = "Proportion rejected (Power)"
+  ) +
+  theme_minimal()
+
+# compute average μ-hat overall and conditional on rejection
+mu_summary <- sim_results |>
+  group_by(mu_true) |>
+  summarise(
+    mean_mu_hat = mean(mu_hat),
+    mean_mu_hat_reject = mean(mu_hat[p_val < alpha])
+  )
+
+# Plot 2: mean estimates
+ggplot(mu_summary, aes(x = mu_true)) +
+  geom_line(aes(y = mean_mu_hat, color = "All samples")) +
+  geom_point(aes(y = mean_mu_hat, color = "All samples")) +
+  geom_line(aes(y = mean_mu_hat_reject, color = "Rejected only")) +
+  geom_point(aes(y = mean_mu_hat_reject, color = "Rejected only")) +
+  labs(
+    title = "Average μ̂ vs true μ",
+    x = "True μ",
+    y = "Average estimated μ̂",
+    color = "Condition"
+  ) +
+  theme_minimal()
+```
+
+# Q3
 
