@@ -11,6 +11,8 @@ library(tidyverse)
 library(rvest)
 library(broom)
 library(purrr)
+library(tibble)
+
 
 #knitr is a package, opts_chunk is a set of fun in knitr, $ means sxtract from opts_chunk, to get "set"
 knitr::opts_chunk$set(
@@ -55,7 +57,7 @@ simulate = function(n, rep = 10000) {
 ```
 
 ```{r}
-library(tibble)
+
 group = 2:50
 prob = sapply(group, simulate)
 
@@ -63,9 +65,10 @@ table = tibble(
   group_size = group,
   probability = prob
 )
+table
 ```
 ## Comment
-The plot shows that when the group size reaches 23, the probability exceeds 0.5, meaning that in a group of 23 people, there’s already more than a 50% chance that at least two share a birthday.
+The probability that at least two people share a birthday increases rapidly with group size — rising from near zero when n is small to about 50% around n = 23, illustrating the classic birthday paradox where coincidences occur much more often than intuition suggests.
 
 # **Q2**
 ### Simulation
@@ -135,8 +138,18 @@ ggplot(mu_summary, aes(x = mu_true)) +
   theme_minimal()
 ```
 
-**No — especially when the true effect (μ) is small.**
 
+
+### **(1) Describe the association between effect size and power.**
+
+The power curve shows a clear positive relationship between the true mean \( \mu \) and the power of the one-sample t-test.
+When \( \mu \) is near 0, the null hypothesis is rarely rejected, indicating low power because the true effect is small relative to the noise \( \sigma = 5 \).
+As \( \mu \) increases, the probability of rejecting the null rises rapidly — around \( \mu = 3 \) the power exceeds 80%, and when \( \mu \ge 4 \), the test almost always detects the effect (power \( \approx 1 \)).
+This demonstrates that larger effect sizes lead to higher power, while small effects often go undetected with a fixed sample size \( n = 30 \).
+
+
+
+### (2) **No — especially when the true effect (μ) is small.**
 **All samples (purple line):**  
 The sample mean \( \hat{\mu} \) is an unbiased estimator of the true mean \( \mu \), so when averaging across all simulated samples, the average \( \hat{\mu} \) is approximately equal to \( \mu \). This is why the purple line follows the diagonal.
 
