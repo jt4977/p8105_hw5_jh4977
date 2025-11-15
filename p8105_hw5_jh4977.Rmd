@@ -96,7 +96,7 @@ Use mean() to calculate the Pro of power(Pr(reject H0))
 ```{r}
 sigma <- 5
 n <- 30
-set_mu <- 1:6
+set_mu <- 0:6
 alpha <- 0.05
 
 sim_one_mu <- function(mu) {
@@ -164,7 +164,7 @@ The power curve shows a clear positive relationship between the true mean \( \mu
 When \( \mu \) is near 0, the null hypothesis is rarely rejected, indicating low power because the true effect is small relative to the noise \( \sigma = 5 \).
 As \( \mu \) increases, the probability of rejecting the null rises rapidly — around \( \mu = 3 \) the power exceeds 80%, and when \( \mu \ge 4 \), the test almost always detects the effect (power \( \approx 1 \)).
 This demonstrates that larger effect sizes lead to higher power, while small effects often go undetected with a fixed sample size \( n = 30 \).
-
+When \( \mu \) = 0, the rejection proportion is close to 0.05, matching the nominal Type I error rate. As μ increases from 1 to 6, the power increases monotonically, exceeding about 80% around \( \mu \) ≈ 3 and approaching 1 for larger effect sizes.
 
 
 ### (2) **No — especially when the true effect (μ) is small.**
@@ -186,8 +186,7 @@ The average \( \hat{\mu} \) across all samples is unbiased, but the average amon
 import data and have a glimpse
 ```{r}
 # 1) Import data
-wp_url <- "https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv"
-homi <- readr::read_csv(wp_url)  
+homi <- readr::read_csv("homicide-data.csv")
 glimpse(homi)
 ```
 **Description of the raw data**
