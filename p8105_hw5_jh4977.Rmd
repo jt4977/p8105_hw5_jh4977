@@ -66,9 +66,27 @@ table = tibble(
   probability = prob
 )
 table
+
+# plot probability with group size
+prob_plot = 
+  table %>% 
+  ggplot(aes(x = group_size, y = probability)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Probability of Shared Birthday by Group Size",
+    x = "Group Size",
+    y = "Probability"
+  ) +
+  theme_minimal()
+
+prob_plot
+
 ```
-## Comment
-The probability that at least two people share a birthday increases rapidly with group size — rising from near zero when n is small to about 50% around n = 23, illustrating the classic birthday paradox where coincidences occur much more often than intuition suggests.
+ 
+### Comment
+
+The plot shows a smooth and rapidly increasing relationship between group size and the probability of at least two people sharing a birthday. When the group is small (fewer than 10 people), the probability stays close to zero. However, the curve rises steeply between group sizes 15 and 30, reflecting how quickly collisions occur once the number of people becomes moderately large. Around a group size of roughly 23, the probability crosses 0.5, the classic birthday paradox point where a shared birthday becomes more likely than not. Beyond 30 people, the probability continues increasing but tapers off as it approaches 1, indicating that duplicates become almost guaranteed in groups of around 50 people.
 
 # **Q2**
 ### Simulation
